@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS user_pred_1;
+
+CREATE TABLE user_pred_1 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  label TEXT
+);

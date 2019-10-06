@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Machine Learning</title>
+</head>
+<body>
+    <h1>Welcome to my page</h1>
+    <p>In the first section we can run our predefined model</p>
+    <form action="/predict" method="get">
+        <button name="runBtn" type="submit">Run the model</button>
+    </form>
+    <p> The accuracy: {{acc}}   </p>
+    <p> The loss: {{loss}}      </p>
+    <img src="{{ user_image }}" alt="User Image">    
+</body>
+</html>
