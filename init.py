@@ -55,6 +55,20 @@ def hello():
     full_filename = os.path.join(app.config['UPLOAD_FOLDER'], 'my.png')
     return render_template('index.html', user_image=full_filename)
 
+
+'''Write the object to a file'''
+def writeObject(obj, name):
+    with open('Diplomamunka/' + name, 'wb') as fp:
+        pickle.dump(obj, fp)
+
+
+'''Read the file from the folder'''
+def readObject(name):
+    with open ('Diplomamunka/' + name, 'rb') as fp:
+        obj = pickle.load(fp)
+    return obj
+
+
 @app.route("/predict", methods=['GET', 'POST'])
 def predict():
         try:
@@ -66,12 +80,12 @@ def predict():
             y_test_onehot = to_categorical(y_test)
             pred = model.predict(x_test)
             #writing the pred, y_test, x_test value into file to save it
-            with open('Diplomamunka/pred_out', 'wb') as fp:
-                pickle.dump(pred, fp)
-            with open('Diplomamunka/y_test', 'wb') as fp:
-                pickle.dump(y_test, fp)
-            with open('Diplomamunka/x_test', 'wb') as fp:
-                pickle.dump(x_test, fp)
+            writeObject(pred, 'pred')
+            writeObject(y_test, 'y_test')
+            writeObject(x_test, 'x_test')
+            writeObject(y_train, 'y_train')
+            writeObject(x_train, 'x_train')
+            
             loss, acc = model.evaluate(x_test, y_test_onehot)
             print(acc)
             img = Image.fromarray(x_train[0], 'RGB')
@@ -85,6 +99,8 @@ def predict():
 def makemodel():
     try:
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+
+
         y_train_onehot = to_categorical(y_train)
         y_test_onehot = to_categorical(y_test)
 
@@ -131,7 +147,7 @@ def sortingByVariance(pred):
         dic[i] = vari
     dic_sorted = dict(sorted(dic.items(), key=operator.itemgetter(1), reverse=False))
     with open('dic_sorted_var', 'wb') as fp:
-                pickle.dump(dic_sorted, fp)
+        pickle.dump(dic_sorted, fp)
     return dic_sorted
 
 # Calculating every element max pred and sorted from the lowwest
@@ -154,12 +170,9 @@ def sortingOriginal(pred, y_test_noisy_onehot):
 def getfilename(number):
     K.clear_session()
 
-    with open ('Diplomamunka/pred_out', 'rb') as fp:
-        pred = pickle.load(fp)
-    with open ('Diplomamunka/y_test', 'rb') as fp:
-        y_test = pickle.load(fp)
-    with open ('Diplomamunka/x_test', 'rb') as fp:
-        x_test = pickle.load(fp)
+    pred =readObject('pred')
+    y_test readObject('y_test')
+    x_test = readObject('x_test')
 
     y_test_onehot = to_categorical(y_test)
 
@@ -186,6 +199,60 @@ def getfilename(number):
     session['number'] = number
     
     return full_filename, dic_sorted[number]
+
+#TODO
+def createNewModel():
+    try:
+        #(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+        x_train = readObject('x_train')
+        y_train = readObject('y_train')
+        x_test = readObject('x_test')
+        y_test = readObject('y_test')
+        
+
+        #TODO I have to add the manually labeled picutres to the train set
+        #1. Select the data from the db
+        #2. With the ID-s select the picture datas from the x_test
+        #3. Add the picture datas to he x_train and the label to the y_train
+
+
+        y_train_onehot = to_categorical(y_train)
+        y_test_onehot = to_categorical(y_test)
+
+        model = Sequential()
+        model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=x_train.shape[1:]))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Flatten())
+        model.add(Dense(units=10, activation='softmax'))
+        model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.rmsprop(lr=0.0001, decay=1e-6),
+                      metrics=['accuracy'])
+
+        # Hyper Parameters
+        NR_EPOCH = 20
+        BATCH_SIZE = 32
+
+        cnn = model.fit(x_train, y_train_onehot, epochs=NR_EPOCH, batch_size=BATCH_SIZE)
+
+        print("--------------------------------------------")
+        loss_and_metrics = model.evaluate(x_test, y_test_onehot)
+        print("\n --------------------------------------------")
+        print(loss_and_metrics)
+
+        #TODO
+        #Save the model
+
+
+    except ValueError:
+        return None
+
+
 
 def writeToDB(label, number):
     with open ('dic_sorted_var', 'rb') as fp:
