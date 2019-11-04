@@ -97,44 +97,10 @@ def predict():
 
 @app.route("/makemodel")
 def makemodel():
-    try:
-        (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-
-
-        y_train_onehot = to_categorical(y_train)
-        y_test_onehot = to_categorical(y_test)
-
-        model = Sequential()
-        model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=x_train.shape[1:]))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-
-        model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-
-        model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-
-        model.add(Flatten())
-        model.add(Dense(units=10, activation='softmax'))
-        model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.rmsprop(lr=0.0001, decay=1e-6),
-                      metrics=['accuracy'])
-
-        # Hyper Parameters
-        NR_EPOCH = 20
-        BATCH_SIZE = 32
-
-        cnn = model.fit(x_train, y_train_onehot, epochs=NR_EPOCH, batch_size=BATCH_SIZE)
-
-        print("--------------------------------------------")
-        loss_and_metrics = model.evaluate(x_test, y_test_onehot)
-        print("\n --------------------------------------------")
-        print(loss_and_metrics)
-
-
-    except ValueError:
-        return None
-
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    makemodel_function(x_train, y_train, x_test, y_test)
     return "ok"
+
 
 # Calculating variance and sorted from the lowwest
 def sortingByVariance(pred):
@@ -150,6 +116,7 @@ def sortingByVariance(pred):
         pickle.dump(dic_sorted, fp)
     return dic_sorted
 
+
 # Calculating every element max pred and sorted from the lowwest
 def soritngByMaxLowPred(pred):
     dic = {}
@@ -157,6 +124,7 @@ def soritngByMaxLowPred(pred):
         dic[i] = pred[i][np.argmax(pred[i])]
     dic_sorted = dict(sorted(dic.items(), key=operator.itemgetter(1), reverse=True))
     return dic_sorted
+
 
 def sortingOriginal(pred, y_test_noisy_onehot):
     dic = {}
@@ -166,6 +134,7 @@ def sortingOriginal(pred, y_test_noisy_onehot):
             dic[i] = pred[i][maxi]
     dic_sorted = dict(sorted(dic.items(), key=operator.itemgetter(1), reverse=True))
     return dic_sorted
+    
 
 def getfilename(number):
     K.clear_session()
@@ -200,25 +169,11 @@ def getfilename(number):
     
     return full_filename, dic_sorted[number]
 
-#TODO
-def createNewModel():
+
+def makemodel_function(x_train, y_train, x_test, y_test):
     try:
-        #(x_train, y_train), (x_test, y_test) = cifar10.load_data()
-        x_train = readObject('x_train')
-        y_train = readObject('y_train')
-        x_test = readObject('x_test')
-        y_test = readObject('y_test')
-        
-
-        #TODO I have to add the manually labeled picutres to the train set
-        #1. Select the data from the db
-        #2. With the ID-s select the picture datas from the x_test
-        #3. Add the picture datas to he x_train and the label to the y_train
-
-
         y_train_onehot = to_categorical(y_train)
         y_test_onehot = to_categorical(y_test)
-
         model = Sequential()
         model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=x_train.shape[1:]))
         model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -251,6 +206,31 @@ def createNewModel():
 
     except ValueError:
         return None
+
+
+#TODO
+def createNewModel():
+    #(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    x_train = readObject('x_train')
+    y_train = readObject('y_train')
+    x_test = readObject('x_test')
+    y_test = readObject('y_test')
+    
+
+    #TODO I have to add the manually labeled picutres to the train set
+    #1. Select the data from the db
+    result = db.get_db().execute("SELECT * FROM user_pred_1").fetchall()
+    #2. With the ID-s select the picture datas from the x_test
+    x_labelled = []
+    y_labelled = []
+    for row in result:
+        x_labelled.append(x_test[row.id])
+        y_labelled.append(row.label)
+    #3. Add the picture datas to he x_train and the label to the y_train
+    x_train_new = x_train + x_labelled
+    y_train_new = y_train + y_labelled
+
+    makemodel_function(x_train_new, y_train_new, x_test, y_test)
 
 
 
