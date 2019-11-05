@@ -2,11 +2,11 @@
 Python: 3.6
 How to start?:
 Windows:
-SET FLAK_APP=diplomamunka
+SET FLASK_APP=Diplomamunka 
 SET FLAK_ENV=development
 Linux:
-EXPORT FLAK_APP=diplomamunka
-EXPORT FLAK_ENV=development
+export FLASK_APP=Diplomamunka
+export FLASK_ENV=development
 
 FLASK RUN --host=0.0.0.0
 Reach:
@@ -44,29 +44,35 @@ app.config['UPLOAD_FOLDER'] = PIC_FOLDER
 app.secret_key = 'secret key'
 app.config.from_mapping(
         # store the database in the instance folder
-        DATABASE='Diplomamunka/Diplomamunka.sqlite3'
+        DATABASE='Diplomamunka.sqlite3'
     )
 # register the database commands
 db.init_app(app)
 
 
-@app.route("/")
-def hello():
-    full_filename = os.path.join(app.config['UPLOAD_FOLDER'], 'my.png')
-    return render_template('index.html', user_image=full_filename)
-
-
 '''Write the object to a file'''
 def writeObject(obj, name):
-    with open('Diplomamunka/' + name, 'wb') as fp:
+    with open(name, 'wb') as fp:
         pickle.dump(obj, fp)
 
 
 '''Read the file from the folder'''
 def readObject(name):
-    with open ('Diplomamunka/' + name, 'rb') as fp:
+    with open (name, 'rb') as fp:
         obj = pickle.load(fp)
     return obj
+
+
+@app.route("/")
+def hello():
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    writeObject(x_train, 'x_train')
+    writeObject(x_test, 'x_test')
+    writeObject(y_train, 'y_train')
+    writeObject(y_test, 'y_test')
+
+    full_filename = os.path.join(app.config['UPLOAD_FOLDER'], 'my.png')
+    return render_template('index.html', user_image=full_filename)
 
 
 @app.route("/predict", methods=['GET', 'POST'])
@@ -80,7 +86,7 @@ def predict():
             y_test_onehot = to_categorical(y_test)
             pred = model.predict(x_test)
             #writing the pred, y_test, x_test value into file to save it
-            writeObject(pred, 'pred')
+            writeObject(pred, 'pred_out')
             writeObject(y_test, 'y_test')
             writeObject(x_test, 'x_test')
             writeObject(y_train, 'y_train')
@@ -139,8 +145,8 @@ def sortingOriginal(pred, y_test_noisy_onehot):
 def getfilename(number):
     K.clear_session()
 
-    pred =readObject('pred')
-    y_test readObject('y_test')
+    pred = readObject('pred_out')
+    y_test = readObject('y_test')
     x_test = readObject('x_test')
 
     y_test_onehot = to_categorical(y_test)
@@ -160,7 +166,7 @@ def getfilename(number):
     pic = x_test[list(dic_sorted)[number]] 
     img = Image.fromarray(pic, 'RGB')
     url_filename = "pic"+ str(number) + ".png" 
-    img.save('Diplomamunka/static/pictures/' + url_filename)
+    img.save('static/pictures/' + url_filename)
     full_filename = os.path.join(app.config['UPLOAD_FOLDER'], url_filename)
     number=number+1
     with open('number', 'wb') as fp:
@@ -224,11 +230,13 @@ def createNewModel():
     x_labelled = []
     y_labelled = []
     for row in result:
-        x_labelled.append(x_test[row.id])
-        y_labelled.append(row.label)
+        x_labelled.append(x_test[row['id']])
+        y_labelled.append(row['label'])
+    writeObject(x_labelled, 'x_labelled') #TODO
+    writeObject(y_labelled, 'y_labelled')
     #3. Add the picture datas to he x_train and the label to the y_train
-    x_train_new = x_train + x_labelled
-    y_train_new = y_train + y_labelled
+    x_train_new = np.append(x_train,x_labelled)
+    y_train_new = np.append(y_train,y_labelled)
 
     makemodel_function(x_train_new, y_train_new, x_test, y_test)
 
@@ -239,7 +247,7 @@ def writeToDB(label, number):
         dic_sorted = pickle.load(fp)
     pic_id = list(dic_sorted)[number]
 
-    db.get_db().execute("UPDATE user_pred_1 SET label = ? WHERE id = ?", (label, pic_id))
+    db.get_db().execute(f"INSERT INTO user_pred_1 (id, label) VALUES ('{pic_id}', '{label}')")
 
 
 @app.route("/picturelabeling", methods=['GET', 'POST'])
@@ -262,6 +270,8 @@ def addLabel():
         writeToDB(label, number)
         full_filename, pred_value = getfilename(number)
         print(number)
+        if number%10 == 0:
+            createNewModel()
     return render_template('pic_label.html', user_image=full_filename, pred_value=pred_value)
 
 
