@@ -178,6 +178,7 @@ def getfilename(number):
 
 def makemodel_function(x_train, y_train, x_test, y_test):
     try:
+        print('makemodel_function')
         y_train_onehot = to_categorical(y_train)
         y_test_onehot = to_categorical(y_test)
         model = Sequential()
@@ -192,7 +193,8 @@ def makemodel_function(x_train, y_train, x_test, y_test):
 
         model.add(Flatten())
         model.add(Dense(units=10, activation='softmax'))
-        model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.rmsprop(lr=0.0001, decay=1e-6),
+        model.compile(loss='categorical_crossentropy', 
+                      optimizer=keras.optimizers.rmsprop(lr=0.0001, decay=1e-6),
                       metrics=['accuracy'])
 
         # Hyper Parameters
@@ -210,8 +212,8 @@ def makemodel_function(x_train, y_train, x_test, y_test):
         #Save the model
 
 
-    except ValueError:
-        return None
+    except ValueError as e:
+        print(e)
 
 
 #TODO
