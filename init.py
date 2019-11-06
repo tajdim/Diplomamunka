@@ -247,7 +247,10 @@ def writeToDB(label, number):
         dic_sorted = pickle.load(fp)
     pic_id = list(dic_sorted)[number]
 
-    db.get_db().execute(f"INSERT INTO user_pred_1 (id, label) VALUES ('{pic_id}', '{label}')")
+    conn = db.get_db()
+    conn.execute(f"INSERT INTO user_pred_1 (id, label) VALUES ('{pic_id}', '{label}')")
+    conn.commit()
+
 
 
 @app.route("/picturelabeling", methods=['GET', 'POST'])
