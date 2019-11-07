@@ -6,8 +6,8 @@
 </head>
 <body>
     <h1>What is on the picture?</h1>
-    <img src="{{ user_image }}" alt="User Image" width="150" height="150">    
-    <form action="/addlabel" method="post">
+    <p><img src="{{ user_image }}" alt="User Image" width="150" height="150"></p>    
+    <p><form action="/addlabel" method="post">
         Label: <select name='PicLabel'>
             <option value="0">airplane</option>
             <option value="1">automobile</option>
@@ -19,8 +19,9 @@
             <option value="7">horse</option>
             <option value="8">ship</option>
             <option value="9" selected>truck</option>
-          </select><br>
-        <input type="submit" value="Submit">
+          </select></p>
+    <p><input type="submit" value="Submit"></p>
+    <p>{{ pred_value }}</p>
     </form>
 </body>
 </html>
