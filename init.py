@@ -216,7 +216,7 @@ def makemodel_function(x_train, y_train, x_test, y_test):
         print(e)
 
 
-#TODO
+
 def createNewModel():
     #(x_train, y_train), (x_test, y_test) = cifar10.load_data()
     x_train = readObject('x_train')
@@ -233,12 +233,12 @@ def createNewModel():
     y_labelled = []
     for row in result:
         x_labelled.append(x_test[row['id']])
-        y_labelled.append(row['label'])
-    writeObject(x_labelled, 'x_labelled') #TODO
+        y_labelled.append([row['label']])
+    writeObject(x_labelled, 'x_labelled')
     writeObject(y_labelled, 'y_labelled')
     #3. Add the picture datas to he x_train and the label to the y_train
-    x_train_new = np.append(x_train,x_labelled)
-    y_train_new = np.append(y_train,y_labelled)
+    x_train_new = np.concatenate((x_train,x_labelled))
+    y_train_new = np.concatenate((y_train,y_labelled))
 
     makemodel_function(x_train_new, y_train_new, x_test, y_test)
 
