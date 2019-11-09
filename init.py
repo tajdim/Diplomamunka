@@ -173,12 +173,12 @@ def getfilename(number):
         pickle.dump(number, fp)
     session['number'] = number
     
-    return full_filename, dic_sorted[number]
+    formatted_pred = [ '%.2f' % elem for elem in pred[number] ]
+    return full_filename, formatted_pred
 
 
 def makemodel_function(x_train, y_train, x_test, y_test):
     try:
-        print('makemodel_function')
         y_train_onehot = to_categorical(y_train)
         y_test_onehot = to_categorical(y_test)
         model = Sequential()
@@ -275,8 +275,8 @@ def addLabel():
         writeToDB(label, number)
         full_filename, pred_value = getfilename(number)
         print(number)
-        if number%10 == 0:
-            createNewModel()
+        #if number%10 == 0:
+            #createNewModel()
     return render_template('pic_label.html', user_image=full_filename, pred_value=pred_value)
 
 
