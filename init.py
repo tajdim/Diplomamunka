@@ -173,7 +173,7 @@ def getfilename(number):
         pickle.dump(number, fp)
     session['number'] = number
     
-    formatted_pred = [ '%.2f' % elem for elem in pred[number] ]
+    formatted_pred = [ '%.2f' % elem for elem in pred[list(dic_sorted)[number]] ]
     return full_filename, formatted_pred
 
 
@@ -210,6 +210,7 @@ def makemodel_function(x_train, y_train, x_test, y_test):
 
         #TODO
         #Save the model
+        model.save('my_model.h5') 
 
 
     except ValueError as e:
