@@ -35,6 +35,7 @@ from keras import backend as K
 import pickle
 import sqlite3
 import db
+import time
 
 
 PIC_FOLDER = os.path.join('static', 'pictures')
@@ -61,6 +62,23 @@ def readObject(name):
     with open (name, 'rb') as fp:
         obj = pickle.load(fp)
     return obj
+
+@app.route('/index')
+def index():
+	return render_template('progress_index.html')
+
+
+@app.route('/progress')
+def progress():
+	def generate():
+		x = 0
+		
+		while x <= 100:
+			yield "data:" + str(x) + "\n\n"
+			x = x + 1
+			time.sleep(0.5)
+
+	return Response(generate(), mimetype= 'text/event-stream')
 
 
 @app.route("/")
@@ -276,8 +294,8 @@ def addLabel():
         writeToDB(label, number)
         full_filename, pred_value = getfilename(number)
         print(number)
-        #if number%10 == 0:
-            #createNewModel()
+        if number%10 == 0:
+            createNewModel()
     return render_template('pic_label.html', user_image=full_filename, pred_value=pred_value)
 
 
